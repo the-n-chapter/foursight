@@ -1,15 +1,20 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Fraunces, Inter } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/components/providers"
 import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-personality",
+})
+
 export const metadata: Metadata = {
-  title: "Pintell",
-  description: "Smart moisture monitoring device",
+  title: "FOURSIGHT",
+  description: "A prototype personality journey and archetype cards.",
 }
 
 export default function RootLayout({
@@ -19,7 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${fraunces.variable}`}>
         <Providers>
           {children}
         </Providers>
