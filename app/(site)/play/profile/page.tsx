@@ -172,7 +172,7 @@ export default function PlayProfilePage() {
             }}
             placeholder="e.g. 28"
             autoComplete="bday-year"
-            aria-required="true"
+            aria-required={true}
             required
             className={fieldControlClass}
           />
@@ -189,7 +189,7 @@ export default function PlayProfilePage() {
             onChange={setMunicipality}
             placeholder="e.g. Helsinki"
             className="w-full"
-            aria-required="true"
+            aria-required={true}
             required
           />
         </div>
