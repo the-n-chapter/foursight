@@ -136,7 +136,7 @@ export function PersonalityFlipCard({ personality }: PersonalityFlipCardProps) {
         <div className="rounded-2xl bg-background p-0.5">
           <div
             className={cn(
-              "relative grid min-h-[27rem] w-full grid-cols-1 grid-rows-1 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d]",
+              "relative grid min-h-[27rem] w-full grid-cols-1 grid-rows-1 transition-transform duration-700 ease-flip-smooth [transform-style:preserve-3d]",
               flipped && "[transform:rotateY(180deg)]"
             )}
           >
