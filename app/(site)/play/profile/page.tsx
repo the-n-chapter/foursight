@@ -218,7 +218,7 @@ export default function PlayProfilePage() {
         </div>
 
         <div className="min-w-0 self-start space-y-1.5">
-          <Label className="text-sm font-medium leading-none">Dependencies</Label>
+          <Label className="text-sm font-medium leading-none">Dependants</Label>
           <p className="text-xs font-normal leading-snug text-muted-foreground">
             Do you have anyone to take care of during the emergency situation? Select all that apply.
           </p>

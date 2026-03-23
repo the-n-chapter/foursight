@@ -15,6 +15,11 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "FOURSIGHT",
   description: "A prototype personality journey and archetype cards.",
+  icons: {
+    icon: [],
+    apple: [],
+    shortcut: [],
+  },
 }
 
 export default function RootLayout({

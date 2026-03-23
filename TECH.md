@@ -10,7 +10,7 @@ FOURSIGHT is a prototype **personality / crisis-archetype experience**: visitors
 
 | Layer | Technology |
 |--------|------------|
-| Framework | [Next.js](https://nextjs.org/) 15.1 (App Router) |
+| Framework | [Next.js](https://nextjs.org/) 15.5 (App Router) |
 | UI | React 19, TypeScript 5 |
 | Styling | Tailwind CSS 3.4, `tailwindcss-animate`, shadcn-style UI primitives (`components/ui/*`) |
 | Fonts | [Inter](https://fonts.google.com/specimen/Inter) (body), [Fraunces](https://fonts.google.com/specimen/Fraunces) as `font-personality` for display headings and card titles |
@@ -97,12 +97,9 @@ For local development, use `.env.local` (not committed). Production (e.g. Vercel
 
 - **Develop:** `npm run dev` — Next dev with Turbopack.
 - **Production build:** `npm run build` then `npm run start`.
-- **Lint:** `npm run lint` (Next ESLint; builds may skip lint via legacy `next.config.js` options if both config files are present — prefer a single merged Next config).
+- **Lint:** `npm run lint` (Next ESLint; production builds skip ESLint when `eslint.ignoreDuringBuilds` is set in `next.config.ts`).
 - **Tests:** `npm run test` (Jest).
-
-### Icons / metadata
-
-`app/icon.svg` supplies the App Router metadata icon. Avoid shipping a stale `favicon.ico` that overrides it unless intentional.
+- **Favicons:** None — root `metadata.icons` uses empty `icon`, `apple`, and `shortcut` arrays so Next does not emit favicon or touch-icon links. Do not add `app/icon*`, `app/favicon.ico`, or `public/favicon.ico` unless you intentionally restore icons.
 
 ## Deployment notes (e.g. Vercel)
 
