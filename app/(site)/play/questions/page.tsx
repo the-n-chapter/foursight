@@ -1,16 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react"
+import type { Swiper as SwiperInstance } from "swiper"
+import { EffectCoverflow } from "swiper/modules"
+import { Swiper, SwiperSlide } from "swiper/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { isQuestionAnswered } from "@/lib/game-question-answer"
 import { cn } from "@/lib/utils"
 import type { GameQuestionRow } from "@/lib/types/game-api"
 import { useGameStore } from "@/lib/stores/use-game-store"
+import "swiper/css"
+import "swiper/css/effect-coverflow"
 
 const WHAT_DO_YOU_DO = /What do you do\??/i
 
@@ -22,9 +26,7 @@ const SCENARIO_BLACK_PHRASE: Record<number, RegExp> = {
   4: /(What['\u2019]s your next move\??)/i,
 }
 
-const promptBlackClass = "text-foreground"
-
-const OTHER_ANSWER_MAX_LEN = 2000
+const promptBlackClass = scenarioQuestionClass
 
 function isHazardNoticeBlock(text: string) {
   return /NOTICE:\s*Hazardous Release/i.test(text) && /\[your location\]/.test(text)
@@ -41,6 +43,13 @@ const hazardNoticeIndentClass =
 
 const hazardNoticeIconClass =
   "mt-0.5 h-[1.1em] w-[1.1em] shrink-0 text-destructive sm:mt-1"
+const urgentNoticeLineClass =
+  "inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-sm font-medium text-destructive animate-pulse"
+const urgentNoticeLabelClass =
+  "rounded-sm bg-destructive px-1.5 py-0.5 text-[0.68rem] font-bold tracking-wide text-destructive-foreground"
+const HIGH_RISK_ALERT_RE = /(your region is in a high risk level,\s*please leave now!)/gi
+const MANDATORY_EVAC_RE =
+  /(Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A\s*\[address:\s*B\]\.?)/gi
 
 function splitLocationMarkers(chunk: string): ReactNode[] {
   const segs = chunk.split(/(\[your location\])/g)
@@ -59,7 +68,56 @@ function ScenarioRichText({ text, className }: { text: string; className: string
   const hazard = isHazardNoticeBlock(text)
 
   if (!hazard) {
-    return <span className={className}>{splitLocationMarkers(text)}</span>
+    const pieces = text.split(
+      /(NOTICE:\s*[^\n]+|your region is in a high risk level,\s*please leave now!|Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A\s*\[address:\s*B\]\.?)/gi
+    )
+    if (pieces.length === 1) {
+      return <span className={className}>{splitLocationMarkers(text)}</span>
+    }
+    return (
+      <span className={className}>
+        {pieces.map((part, i) => {
+          const m = /^NOTICE:\s*(.*)$/i.exec(part.trim())
+          if (m) {
+            return (
+              <span key={i} className={urgentNoticeLineClass}>
+                <span className={urgentNoticeLabelClass}>NOTICE</span>
+                <span>{splitLocationMarkers(m[1])}</span>
+              </span>
+            )
+          }
+          if (HIGH_RISK_ALERT_RE.test(part.trim())) {
+            HIGH_RISK_ALERT_RE.lastIndex = 0
+            const normalized = part.trim().replace(/^your\b/i, "Your")
+            return (
+              <>
+                <span key={`${i}-space`}> </span>
+                <span key={i} className={urgentNoticeLineClass}>
+                  <span className={urgentNoticeLabelClass}>NOTICE</span>
+                  <span className="block basis-full">{splitLocationMarkers(normalized)}</span>
+                </span>
+              </>
+            )
+          }
+          if (MANDATORY_EVAC_RE.test(part.trim())) {
+            MANDATORY_EVAC_RE.lastIndex = 0
+            return (
+              <>
+                <span key={`${i}-before`} className="block h-1.5" aria-hidden />
+                <span key={i} className={urgentNoticeLineClass}>
+                  <span className={urgentNoticeLabelClass}>NOTICE</span>
+                  <span className="block basis-full">{splitLocationMarkers(part.trim())}</span>
+                </span>
+                <span key={`${i}-after`} className="block h-1.5" aria-hidden />
+              </>
+            )
+          }
+          return (
+            <span key={i}>{splitLocationMarkers(part)}</span>
+          )
+        })}
+      </span>
+    )
   }
 
   // Use full `text` for the bang split so “[your location] …” tails are not parked after a closing quote.
@@ -154,11 +212,10 @@ function QuestionCardTitle({ text, cardIndex }: { text: string; cardIndex: numbe
 
 export default function PlayQuestionsPage() {
   const router = useRouter()
+  const stackSwiperRef = useRef<SwiperInstance | null>(null)
   const profile = useGameStore((s) => s.profile)
   const answers = useGameStore((s) => s.answers)
-  const otherAnswers = useGameStore((s) => s.otherAnswers ?? {})
   const setAnswer = useGameStore((s) => s.setAnswer)
-  const setOtherAnswer = useGameStore((s) => s.setOtherAnswer)
   const [questions, setQuestions] = useState<GameQuestionRow[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -195,8 +252,12 @@ export default function PlayQuestionsPage() {
     }
   }, [questions])
 
-  const allAnswered =
-    !!questions?.length && questions.every((q) => isQuestionAnswered(q, answers, otherAnswers))
+  useEffect(() => {
+    if (!questions?.length) return
+    stackSwiperRef.current?.slideTo(currentIndex, 320, false)
+  }, [currentIndex, questions])
+
+  const allAnswered = !!questions?.length && questions.every((q) => isQuestionAnswered(q, answers))
 
   const finish = () => {
     if (!allAnswered) return
@@ -227,8 +288,8 @@ export default function PlayQuestionsPage() {
   const total = questions.length
   const safeIndex = Math.min(Math.max(0, currentIndex), total - 1)
   const q = questions[safeIndex]
-  const answeredCount = questions.filter((qq) => isQuestionAnswered(qq, answers, otherAnswers)).length
-  const hasCurrentAnswer = isQuestionAnswered(q, answers, otherAnswers)
+  const answeredCount = questions.filter((qq) => isQuestionAnswered(qq, answers)).length
+  const hasCurrentAnswer = isQuestionAnswered(q, answers)
   const isFirst = safeIndex === 0
   const isLast = safeIndex === total - 1
 
@@ -243,26 +304,42 @@ export default function PlayQuestionsPage() {
         <div className="relative px-2 sm:px-4">
           {total > 1 && (
             <div
-              className="pointer-events-none absolute left-1/2 top-0 z-0 w-[min(100%,28rem)] -translate-x-1/2"
+              className="pointer-events-none absolute left-1/2 top-0 z-0 w-[min(100%,30rem)] -translate-x-1/2"
               aria-hidden
             >
-              {questions.map((_, i) => {
-                const offset = (total - 1 - i) * 6
-                const isPast = i < safeIndex
-                const isActive = i === safeIndex
-                return (
-                  <div
-                    key={i}
-                    className={cn(
-                      "absolute left-1/2 h-9 w-[94%] -translate-x-1/2 rounded-t-lg border border-b-0 shadow-sm transition-colors",
-                      isActive && "border-primary/40 bg-primary/10",
-                      isPast && !isActive && "border-border bg-muted/90",
-                      !isPast && !isActive && "border-border bg-muted/60"
-                    )}
-                    style={{ top: -offset, zIndex: total - i }}
-                  />
-                )
-              })}
+              <Swiper
+                modules={[EffectCoverflow]}
+                effect="coverflow"
+                centeredSlides={true}
+                slidesPerView={5}
+                initialSlide={safeIndex}
+                allowTouchMove={false}
+                loop={false}
+                speed={320}
+                onSwiper={(swiper) => {
+                  stackSwiperRef.current = swiper
+                }}
+                coverflowEffect={{
+                  rotate: 0,
+                  stretch: 18,
+                  depth: 135,
+                  modifier: 1.15,
+                  scale: 0.86,
+                  slideShadows: false,
+                }}
+                className="h-12"
+              >
+                {questions.map((_, i) => (
+                  <SwiperSlide key={i} className="!w-28 sm:!w-32">
+                    <div
+                      className={cn(
+                        "mx-auto h-9 w-full rounded-t-lg border border-b-0 shadow-sm",
+                        i < safeIndex ? "border-border bg-muted/90" : "border-border bg-muted/60"
+                      )}
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
           )}
 
@@ -283,50 +360,12 @@ export default function PlayQuestionsPage() {
 
             <Card className="border-0 shadow-none rounded-t-none rounded-b-xl">
               <CardHeader className="pb-2">
-                <CardTitle className="w-full text-left font-personality text-base font-medium leading-relaxed whitespace-pre-wrap">
+                <CardTitle className="w-full text-left font-personality text-lg font-medium leading-relaxed whitespace-pre-wrap sm:text-xl">
                   <QuestionCardTitle text={q.question_text} cardIndex={safeIndex} />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 pt-4 pb-6">
-                {q.options.map((opt, optIndex) => {
-                  const isFreeTextSlot =
-                    optIndex === q.options.length - 1 && !String(opt.option_text).trim()
-
-                  if (isFreeTextSlot) {
-                    const inputId = `free-text-${q.id}`
-                    const otherRowActive = !answers[q.id] && q.id in otherAnswers
-                    return (
-                      <div
-                        key={opt.id}
-                        role="group"
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-lg border px-4 py-2.5 text-left text-sm transition-colors",
-                          otherRowActive
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-border hover:bg-accent/60"
-                        )}
-                      >
-                        <label
-                          htmlFor={inputId}
-                          className="shrink-0 cursor-pointer select-none font-medium text-primary"
-                        >
-                          {opt.option_key}.
-                        </label>
-                        <Input
-                          id={inputId}
-                          className="h-9 flex-1 min-w-0 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                          value={otherAnswers[q.id] ?? ""}
-                          maxLength={OTHER_ANSWER_MAX_LEN}
-                          placeholder="Your answer…"
-                          aria-label={`Option ${opt.option_key}: type your own answer`}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onFocus={() => setOtherAnswer(q.id, otherAnswers[q.id] ?? "")}
-                          onChange={(e) => setOtherAnswer(q.id, e.target.value)}
-                        />
-                      </div>
-                    )
-                  }
-
+                {q.options.map((opt) => {
                   const selected = answers[q.id] === opt.id
                   return (
                     <button
@@ -334,7 +373,7 @@ export default function PlayQuestionsPage() {
                       type="button"
                       onClick={() => setAnswer(q.id, opt.id)}
                       className={cn(
-                        "w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors",
+                        "w-full rounded-lg border px-4 py-3 text-left text-xs transition-colors sm:text-sm",
                         selected
                           ? "border-primary bg-primary/10 text-foreground"
                           : "border-border hover:bg-accent/60"

@@ -18,14 +18,13 @@ export const PERSONALITY_BY_DIMENSION: Record<DimensionKey, PersonalityCard> = {
   react: {
     dimension: "react",
     dimensionLabel: "REACT",
-    title: "The Quickstarter",
-    youAreName: "The Quickstarter",
+    title: "The Decisive Catalyst",
+    youAreName: "The Decisive Catalyst",
     description:
-      "You're the first to notice danger and the first to act. You move fast, trust your gut, and rarely wait for someone else to take charge. You're the spark that gets everyone going.",
+      "You react quickly when something happens. While others are still processing the situation, you are already moving and making decisions. Your speed can be valuable in emergencies where hesitation costs time.",
     crisisTips: [
-      "Trust your instincts, but double-check critical info.",
-      "Focus on immediate threats first, don't let speed make you reckless.",
-      "Keep your team in the loop so no one gets left behind.",
+      "Use your speed to start action early, but pause briefly to check facts.",
+      "Help slower people get moving instead of becoming frustrated with them.",
     ],
   },
   trust: {
@@ -44,53 +43,73 @@ export const PERSONALITY_BY_DIMENSION: Record<DimensionKey, PersonalityCard> = {
   indep: {
     dimension: "indep",
     dimensionLabel: "INDEPEND",
-    title: "The Independent Thinker",
-    youAreName: "The Independent Thinker",
+    title: "The Independent Pathfinder",
+    youAreName: "The Independent Pathfinder",
     description:
-      "You trust yourself above all else. Rules and plans are nice, but you prefer figuring things out on your own. You're creative, resourceful, and never shy away from taking responsibility.",
+      "In uncertain situations, you rely on your own judgment over others' opinions or instructions. You act quickly and take initiative early, often moving ahead while others are still deciding what to do.",
     crisisTips: [
-      "Use your instincts, but take a moment to check key info.",
-      "Don't go it completely alone, but share updates with others for safety.",
-      "Your independence is powerful, just pair it with a bit of teamwork.",
+      "Trust your instincts and experience, but take a moment to check key information, especially from authorities.",
+      "Your independence is powerful, and pairing it with teamwork improves both personal and community safety.",
     ],
   },
   adapt: {
     dimension: "adapt",
     dimensionLabel: "ADAPT",
-    title: "The Flexible Adapter",
-    youAreName: "The Flexible Adapter",
+    title: "The Intuitive Adapter",
+    youAreName: "The Intuitive Adapter",
     description:
-      "When everything changes, you don't panic but adjust. You're calm, clever, and quick to find a solution when plans go sideways. Flexibility is your superpower in unpredictable situations.",
+      "You are good at handling uncertainty. When situations change, you do not freeze but adapt. You respond quickly to what is happening in the moment, instead of relying on fixed plans.",
     crisisTips: [
-      "Embrace change, but don't ignore safety rules.",
-      "Bridge the gap between fast movers and cautious thinkers.",
-      "Keep solutions simple and practical.",
+      "Balance improvisation with basic planning to avoid unnecessary risks.",
+      "Stick with a good plan when it is working, and avoid changing too quickly.",
     ],
   },
   mobil: {
     dimension: "mobil",
     dimensionLabel: "MOBILITY",
-    title: "The Go-Getter",
-    youAreName: "The Go-Getter",
+    title: "The Agile Go-Getter",
+    youAreName: "The Agile Go-Getter",
     description:
-      "Action is your middle name. You see what needs doing and jump right in. You're ready to move immediately and cover long distances if needed. Your energy motivates everyone around you, and you're always ready to tackle the next challenge.",
+      "When an alert comes, you are ready to move quickly. You prefer using organized transport systems and following planned routes instead of figuring things out on your own.",
     crisisTips: [
-      "Take the lead on urgent tasks and be ready to relocate quickly.",
-      "Check safety before acting because moving fast doesn't mean ignoring risks.",
-      "Coordinate with planners and adapters to make your mobility most effective.",
+      "Use your strength in movement to follow official evacuation routes and transport systems.",
+      "Do not prioritize speed over safety; check key details before moving and coordinate with others.",
     ],
   },
   safety: {
     dimension: "safety",
     dimensionLabel: "SAFETY",
-    title: "The Safety Seeker",
-    youAreName: "The Safety Seeker",
+    title: "The Cautious Survivor",
+    youAreName: "The Cautious Survivor",
     description:
-      "You're all about thinking ahead. Safety, preparation, and careful choices come first. You notice risks others overlook and make sure the team is ready for anything.",
+      "You prioritize safety above all else. In uncertain situations, you prefer to slow down, assess risks, and choose the safest path forward. While others may act quickly, you make sure your decisions do not lead to unnecessary danger.",
     crisisTips: [
-      "Prepare early and keep your options open.",
-      "Communicate risks clearly: others need your insight.",
-      "Don't get stuck overthinking: sometimes it's okay to act with the info you have.",
+      "Try to balance caution with timely action, because waiting too long can create new risks.",
+      "In fast-changing situations, trust your judgment even without perfect information.",
+    ],
+  },
+  commu: {
+    dimension: "commu",
+    dimensionLabel: "COMMUNITY",
+    title: "The Helping Heart",
+    youAreName: "The Helping Heart",
+    description:
+      "You naturally help others when times get hard. Teamwork, support, and connection are at your core. In a crisis, your presence lifts spirits and brings people together.",
+    crisisTips: [
+      "Reach out to help others, but always look after your own safety first.",
+      "Use your teamwork skills to keep the group calm and make decisions early before confusion spreads.",
+    ],
+  },
+  prep: {
+    dimension: "prep",
+    dimensionLabel: "PREPAREDNESS",
+    title: "The Equipped Mover",
+    youAreName: "The Equipped Mover",
+    description:
+      "You see preparation as the key to confidence. By planning ahead and keeping things organized, you turn uncertainty into clarity long before challenges arise.",
+    crisisTips: [
+      "Rely on your preparation while keeping your mind open to new possibilities.",
+      "Support those who need guidance, and adapt your plans as circumstances change.",
     ],
   },
 }

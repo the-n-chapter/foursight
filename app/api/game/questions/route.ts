@@ -33,7 +33,9 @@ export async function GET() {
         weight_indep,
         weight_adapt,
         weight_mobil,
-        weight_safety
+        weight_safety,
+        weight_commu,
+        weight_prep
       )
     `
     )

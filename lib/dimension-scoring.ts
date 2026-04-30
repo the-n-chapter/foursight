@@ -1,11 +1,28 @@
 import type { GameQuestionRow } from "@/lib/types/game-api"
 
-export type DimensionKey = "react" | "trust" | "indep" | "adapt" | "mobil" | "safety"
+export type DimensionKey =
+  | "react"
+  | "trust"
+  | "indep"
+  | "adapt"
+  | "mobil"
+  | "safety"
+  | "commu"
+  | "prep"
 
-export const DIMENSION_KEYS: DimensionKey[] = ["react", "trust", "indep", "adapt", "mobil", "safety"]
+export const DIMENSION_KEYS: DimensionKey[] = [
+  "react",
+  "trust",
+  "indep",
+  "adapt",
+  "mobil",
+  "safety",
+  "commu",
+  "prep",
+]
 
 export function emptyDimensions(): Record<DimensionKey, number> {
-  return { react: 0, trust: 0, indep: 0, adapt: 0, mobil: 0, safety: 0 }
+  return { react: 0, trust: 0, indep: 0, adapt: 0, mobil: 0, safety: 0, commu: 0, prep: 0 }
 }
 
 export function computeDimensionTotals(
@@ -25,6 +42,8 @@ export function computeDimensionTotals(
     t.adapt += opt.weight_adapt ?? 0
     t.mobil += opt.weight_mobil ?? 0
     t.safety += opt.weight_safety ?? 0
+    t.commu += opt.weight_commu ?? 0
+    t.prep += opt.weight_prep ?? 0
   }
 
   return t

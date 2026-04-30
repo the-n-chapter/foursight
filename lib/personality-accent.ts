@@ -116,6 +116,32 @@ const ACCENTS: Record<DimensionKey, PersonalityAccent> = {
     flipBg: "bg-sky-500/[0.07] dark:bg-sky-500/14",
     focusRing: "focus-visible:ring-sky-400/45",
   },
+  commu: {
+    outerGradient: "from-teal-500/35 via-teal-500/12 to-transparent",
+    faceBorder: "border-teal-500/25 dark:border-teal-400/30",
+    topLineGradient: "from-transparent via-teal-500/70 to-transparent",
+    headerGradient:
+      "from-teal-500/[0.16] via-teal-500/[0.07] to-transparent dark:from-teal-500/22 dark:via-teal-500/11 dark:to-teal-950/20",
+    sectionBar: "bg-teal-500/85 dark:bg-teal-400/80",
+    crisisBullet: "bg-teal-500 dark:bg-teal-400",
+    crisisBulletRing: "ring-teal-500/30 dark:ring-teal-400/35",
+    flipBorder: "border-teal-500/30 dark:border-teal-400/35",
+    flipBg: "bg-teal-500/[0.07] dark:bg-teal-500/14",
+    focusRing: "focus-visible:ring-teal-400/45",
+  },
+  prep: {
+    outerGradient: "from-indigo-500/35 via-indigo-500/12 to-transparent",
+    faceBorder: "border-indigo-500/25 dark:border-indigo-400/30",
+    topLineGradient: "from-transparent via-indigo-500/70 to-transparent",
+    headerGradient:
+      "from-indigo-500/[0.16] via-indigo-500/[0.07] to-transparent dark:from-indigo-500/22 dark:via-indigo-500/11 dark:to-indigo-950/20",
+    sectionBar: "bg-indigo-500/85 dark:bg-indigo-400/80",
+    crisisBullet: "bg-indigo-500 dark:bg-indigo-400",
+    crisisBulletRing: "ring-indigo-500/30 dark:ring-indigo-400/35",
+    flipBorder: "border-indigo-500/30 dark:border-indigo-400/35",
+    flipBg: "bg-indigo-500/[0.07] dark:bg-indigo-500/14",
+    focusRing: "focus-visible:ring-indigo-400/45",
+  },
 }
 
 export function getPersonalityAccent(dimension: PersonalityDimension): PersonalityAccent {

@@ -7,9 +7,9 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PersonalityFlipCard } from "@/components/personality-flip-card"
 import { ResultShare } from "@/components/result-share"
-import { emptyDimensions, type DimensionKey } from "@/lib/dimension-scoring"
-import { isQuestionAnswered, questionHasBlankLastOption, usedOnlyFreeTextAnswers } from "@/lib/game-question-answer"
-import { UNPREDICTABLE_PERSONALITY_CARD, getPersonalityCard } from "@/lib/personality-cards"
+import type { DimensionKey } from "@/lib/dimension-scoring"
+import { isQuestionAnswered } from "@/lib/game-question-answer"
+import { getPersonalityCard } from "@/lib/personality-cards"
 import { submitGameDecisions } from "@/lib/submit-game-decisions"
 import type { GameQuestionRow } from "@/lib/types/game-api"
 import { useGameStore } from "@/lib/stores/use-game-store"
@@ -19,15 +19,12 @@ interface ResultScoresPayload {
   averages: Record<DimensionKey, number>
   dominant: DimensionKey
   decisionCount: number
-  /** All answers were free-text only; skip dimension scoring. */
-  unpredictable?: boolean
 }
 
 export default function PlayResultPage() {
   const router = useRouter()
   const profile = useGameStore((s) => s.profile)
   const answers = useGameStore((s) => s.answers)
-  const otherAnswers = useGameStore((s) => s.otherAnswers ?? {})
   const consentAccepted = useGameStore((s) => s.consentAccepted)
   const clientSessionId = useGameStore((s) => s.clientSessionId)
   const scoresFetchStarted = useRef(false)
@@ -51,8 +48,7 @@ export default function PlayResultPage() {
     void loadQuestions()
   }, [loadQuestions])
 
-  const allAnswered =
-    !!questions?.length && questions.every((q) => isQuestionAnswered(q, answers, otherAnswers))
+  const allAnswered = !!questions?.length && questions.every((q) => isQuestionAnswered(q, answers))
 
   const loadScoresFromDb = useCallback(async () => {
     if (!clientSessionId || !questions?.length || !allAnswered || !consentAccepted) return
@@ -61,29 +57,11 @@ export default function PlayResultPage() {
     setScoresError(null)
 
     try {
-      const decisions = questions.map((q) => {
-        const other = otherAnswers[q.id]?.trim()
-        if (questionHasBlankLastOption(q) && other) {
-          return { questionId: q.id, otherText: other }
-        }
-        return { questionId: q.id, optionId: answers[q.id]! }
-      })
+      const decisions = questions.map((q) => ({ questionId: q.id, optionId: answers[q.id]! }))
 
       const sub = await submitGameDecisions(clientSessionId, decisions)
       if (!sub.ok) {
         throw new Error(sub.error ?? "Could not save decisions")
-      }
-
-      const onlyFreeText = usedOnlyFreeTextAnswers(questions, answers, otherAnswers)
-      if (onlyFreeText) {
-        setApiResult({
-          ok: true,
-          unpredictable: true,
-          averages: emptyDimensions(),
-          dominant: "react",
-          decisionCount: questions.length,
-        })
-        return
       }
 
       const res = await fetch(
@@ -97,7 +75,6 @@ export default function PlayResultPage() {
 
       setApiResult({
         ok: true,
-        unpredictable: false,
         averages: data.averages,
         dominant: data.dominant,
         decisionCount: data.decisionCount,
@@ -109,7 +86,7 @@ export default function PlayResultPage() {
     } finally {
       setScoresLoading(false)
     }
-  }, [clientSessionId, questions, answers, otherAnswers, allAnswered, consentAccepted])
+  }, [clientSessionId, questions, answers, allAnswered, consentAccepted])
 
   useEffect(() => {
     if (!allAnswered || !questions?.length || !clientSessionId || !consentAccepted) return
@@ -154,12 +131,7 @@ export default function PlayResultPage() {
     )
   }
 
-  const personality =
-    apiResult?.unpredictable === true
-      ? UNPREDICTABLE_PERSONALITY_CARD
-      : apiResult?.dominant != null
-        ? getPersonalityCard(apiResult.dominant)
-        : null
+  const personality = apiResult?.dominant != null ? getPersonalityCard(apiResult.dominant) : null
 
   return (
     <div className="mx-auto w-full max-w-xl px-4 py-10">
@@ -182,7 +154,7 @@ export default function PlayResultPage() {
       {apiResult && personality && (
         <>
           <PersonalityFlipCard
-            key={apiResult.unpredictable ? "unpredictable" : apiResult.dominant}
+            key={apiResult.dominant}
             personality={personality}
           />
           <div className="mt-10 grid w-full grid-cols-3 gap-2 sm:gap-3">

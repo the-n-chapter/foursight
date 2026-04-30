@@ -1,6 +1,4 @@
-export type DecisionPayload =
-  | { questionId: string; optionId: string; otherText?: undefined }
-  | { questionId: string; otherText: string; optionId?: undefined }
+export type DecisionPayload = { questionId: string; optionId: string }
 
 export async function submitGameDecisions(
   sessionToken: string,

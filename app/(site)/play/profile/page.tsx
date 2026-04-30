@@ -61,6 +61,9 @@ export default function PlayProfilePage() {
   const [municipality, setMunicipality] = useState(existing?.municipality ?? "")
   const [gender, setGender] = useState<GenderOption | null>(existing?.gender ?? null)
   const [dependencies, setDependencies] = useState<DependencyId[]>(existing?.dependencies ?? [])
+  const [hasEvacuationExperience, setHasEvacuationExperience] = useState<boolean | null>(
+    existing?.hasEvacuationExperience ?? null
+  )
   const [saving, setSaving] = useState(false)
 
   const toggleDep = (id: DependencyId) => {
@@ -69,7 +72,9 @@ export default function PlayProfilePage() {
 
   const resolvedMunicipality = resolveFinnishMunicipality(municipality)
   const validAge = parseValidAge(age)
-  const canContinue = Boolean(gender && validAge !== null && resolvedMunicipality)
+  const canContinue = Boolean(
+    gender && validAge !== null && resolvedMunicipality && hasEvacuationExperience !== null
+  )
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,6 +89,10 @@ export default function PlayProfilePage() {
     const muni = resolveFinnishMunicipality(municipality)
     if (!muni) {
       toast.error("Choose your municipality from the list (use the suggestions while typing).")
+      return
+    }
+    if (hasEvacuationExperience === null) {
+      toast.error("Please select YES or NO for evacuation-related experience.")
       return
     }
 
@@ -103,6 +112,7 @@ export default function PlayProfilePage() {
           has_children: dependencies.includes("children"),
           has_elderly: dependencies.includes("elderly"),
           has_pets: dependencies.includes("pets"),
+          has_evacuation_experience: hasEvacuationExperience,
         }),
       })
       const data = (await res.json()) as { ok?: boolean; playerId?: string; error?: string }
@@ -117,6 +127,7 @@ export default function PlayProfilePage() {
         gender,
         municipality: muni,
         dependencies,
+        hasEvacuationExperience,
       })
       router.push("/play/questions")
     } catch {
@@ -233,6 +244,37 @@ export default function PlayProfilePage() {
               <span className="text-sm font-medium">{label}</span>
             </label>
           ))}
+        </div>
+
+        <div className="min-w-0 self-start space-y-1.5">
+          <Label className="text-sm font-medium leading-none">Experience</Label>
+          <p className="text-xs font-normal leading-snug text-muted-foreground">
+            Do you have any evacuation-related experience before?
+          </p>
+        </div>
+        <div
+          className={`${controlCell} flex flex-wrap content-center gap-2`}
+          role="group"
+          aria-label="Evacuation-related experience"
+        >
+          <Button
+            type="button"
+            size="sm"
+            variant={hasEvacuationExperience === true ? "default" : "outline"}
+            className="h-8 shrink-0 rounded-full px-4 text-sm"
+            onClick={() => setHasEvacuationExperience(true)}
+          >
+            Yes
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={hasEvacuationExperience === false ? "default" : "outline"}
+            className="h-8 shrink-0 rounded-full px-4 text-sm"
+            onClick={() => setHasEvacuationExperience(false)}
+          >
+            No
+          </Button>
         </div>
 
         <div className="col-span-2 flex justify-center pt-8">

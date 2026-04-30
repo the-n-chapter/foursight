@@ -18,6 +18,7 @@ const bodySchema = z.object({
   has_children: z.boolean(),
   has_elderly: z.boolean(),
   has_pets: z.boolean(),
+  has_evacuation_experience: z.boolean(),
 })
 
 export async function POST(req: Request) {
@@ -67,6 +68,7 @@ export async function POST(req: Request) {
     has_children: p.has_children,
     has_elderly: p.has_elderly,
     has_pets: p.has_pets,
+    has_evacuation_experience: p.has_evacuation_experience,
   }
 
   if (existing?.id) {

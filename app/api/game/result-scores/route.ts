@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { averagesAndDominantFromDecisions } from "@/lib/dominant-dimension"
+import { normalizedDominantFromDecisions } from "@/lib/dominant-dimension"
 import type { DimensionKey } from "@/lib/dimension-scoring"
 import { getSupabaseAdmin, supabaseMissingEnvMessage } from "@/lib/supabase/admin"
 
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
   const { data: rows, error: dErr } = await admin
     .from("decisions")
-    .select("score_react, score_trust, score_indep, score_adapt, score_mobil, score_safety")
+    .select("question_id, score_react, score_trust, score_indep, score_adapt, score_mobil, score_safety, score_commu, score_prep")
     .eq("player_id", playerId)
 
   if (dErr) {
@@ -43,7 +43,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "No decisions found for this session" }, { status: 404 })
   }
 
-  const computed = averagesAndDominantFromDecisions(rows)
+  const questionIds = [...new Set(rows.map((r) => r.question_id))]
+  const { data: optionRows, error: oErr } = await admin
+    .from("options")
+    .select(
+      "question_id, weight_react, weight_trust, weight_indep, weight_adapt, weight_mobil, weight_safety, weight_commu, weight_prep"
+    )
+    .in("question_id", questionIds)
+
+  if (oErr || !optionRows?.length) {
+    console.error("[result-scores/options]", oErr?.message)
+    return NextResponse.json({ ok: false, error: "Could not load option ranges" }, { status: 500 })
+  }
+
+  const computed = normalizedDominantFromDecisions(rows, optionRows)
   if (!computed) {
     return NextResponse.json({ ok: false, error: "Could not compute scores" }, { status: 500 })
   }

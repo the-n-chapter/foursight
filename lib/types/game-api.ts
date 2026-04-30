@@ -10,6 +10,8 @@ export interface GameOptionRow {
   weight_adapt: number
   weight_mobil: number
   weight_safety: number
+  weight_commu: number
+  weight_prep: number
 }
 
 export interface GameQuestionRow {

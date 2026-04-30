@@ -54,8 +54,8 @@ Layouts:
 
 1. **Consent** — `PlayConsentGate` + `useGameStore.setConsentAccepted`. Accepting consent starts a **new client session**: fresh `sessionToken` (`clientSessionId`), cleared profile, answers, and `playerId`.
 2. **Profile** — User fills the form; client calls `POST /api/game/player` with `sessionToken` and profile fields. Server upserts a row in `players` and returns `playerId` (stored in Zustand).
-3. **Questions** — `GET /api/game/questions` returns ordered questions and options (weights per dimension). Answers live in Zustand (`answers`, `otherAnswers` for free-text “other” options).
-4. **Submit** — Client sends `POST /api/game/submit` with `sessionToken` and `decisions` (per question: either `optionId` or `otherText`). Server resolves scores, replaces `decisions` for that player, and persists rows.
+3. **Questions** — `GET /api/game/questions` returns ordered questions and options (weights per dimension). Answers live in Zustand (`answers` as selected option IDs per question).
+4. **Submit** — Client sends `POST /api/game/submit` with `sessionToken` and `decisions` (per question: `optionId` only). Server resolves scores, replaces `decisions` for that player, and persists rows.
 5. **Result** — `GET /api/game/result-scores?sessionToken=…` loads decisions, computes averages and **dominant dimension**, drives result UI and archetype mapping (`lib/personality-cards.ts`, `lib/dimension-scoring.ts`, `lib/dominant-dimension.ts`).
 
 Zustand persistence key and shape are defined in `lib/stores/use-game-store.ts` (includes `consentAccepted`, `clientSessionId`, `playerId`, `profile`, answers).
@@ -77,9 +77,9 @@ Request/response shapes and row types are aligned with `lib/types/game-api.ts` a
 
 Server code expects PostgreSQL tables (names from queries):
 
-- **`players`** — e.g. `session_token`, profile fields (`nickname`, `age`, `gender`, `municipality`, dependency flags), identifiers.
-- **`questions`** — `id`, `order_index`, `question_text`; related **`options`** with `option_key`, `option_text`, and weight columns `weight_react`, `weight_trust`, `weight_indep`, `weight_adapt`, `weight_mobil`, `weight_safety`.
-- **`decisions`** — per answer: link to `player_id`, chosen option / “other” handling, and stored score columns (`score_*`) as produced on submit.
+- **`players`** — e.g. `session_token`, profile fields (`nickname`, `age`, `gender`, `municipality`, dependency flags, `has_evacuation_experience`), identifiers.
+- **`questions`** — `id`, `order_index`, `question_text`; related **`options`** with `option_key`, `option_text`, and weight columns `weight_react`, `weight_trust`, `weight_indep`, `weight_adapt`, `weight_mobil`, `weight_safety`, `weight_commu`, `weight_prep`.
+- **`decisions`** — per answer: link to `player_id`, chosen option key, and stored score columns (`score_react`, `score_trust`, `score_indep`, `score_adapt`, `score_mobil`, `score_safety`, `score_commu`, `score_prep`) as produced on submit.
 
 **Security note:** The app uses the **service role** key only in server-side route handlers. It bypasses RLS; do not expose this key to the client. Row Level Security and anon keys are appropriate for any future direct browser access, which this game API path does not rely on today.
 
@@ -116,4 +116,4 @@ For local development, use `.env.local` (not committed). Production (e.g. Vercel
 
 ---
 
-*Last updated to match the repository layout and dependencies as of the document’s creation; adjust when schema or routes change.*
+*Last updated for schema v2 (no free-text "Other" flow; 8 scored dimensions including `commu` and `prep`).*
