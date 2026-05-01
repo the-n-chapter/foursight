@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react"
 import type { Swiper as SwiperInstance } from "swiper"
@@ -45,9 +46,11 @@ const urgentNoticeLineClass =
   "inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border-2 border-red-600 bg-yellow-200 px-2 py-1 text-sm font-bold text-red-700"
 const urgentNoticeLabelClass =
   "rounded-sm bg-red-600 px-1.5 py-0.5 text-[0.68rem] font-extrabold tracking-wide text-white"
+const securityAlertHighlightClass =
+  "inline bg-[linear-gradient(transparent_58%,#FFEB3B_58%)] px-0.5 text-black"
 const HIGH_RISK_ALERT_RE = /(your region is in a high risk level,\s*please leave now!)/gi
 const MANDATORY_EVAC_RE =
-  /(Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A\s*\[address:\s*B\]\.?)/gi
+  /(Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A(?:\s*\[address:\s*B\])?\.?)/gi
 
 function isSecuritySituationMessage(text: string) {
   const normalized = text.trim().toLowerCase()
@@ -60,6 +63,10 @@ function isSecuritySituationMessage(text: string) {
 
 const SECURITY_SENTENCE_RE =
   /((?:The\s+)?security situation in your area has escalated\.\s*No immediate action is required at this time\.\s*Stay alert and follow official updates\.?)/i
+const MANDATORY_EVAC_SENTENCE_RE =
+  /(Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A(?:\s*\[address:\s*B\])?\.?)/i
+const HIGH_RISK_ALERT_SENTENCE_RE = /(your region is in a high risk level,\s*please leave now!)/i
+const ALERT_TEXT_CARD_INDEXES = new Set([0, 3, 4])
 
 function splitLocationMarkers(chunk: string): ReactNode[] {
   const segs = chunk.split(/(\[your location\])/g)
@@ -74,8 +81,9 @@ function splitLocationMarkers(chunk: string): ReactNode[] {
   )
 }
 
-function ScenarioRichText({ text, className }: { text: string; className: string }) {
+function ScenarioRichText({ text, className, cardIndex }: { text: string; className: string; cardIndex: number }) {
   const hazard = isHazardNoticeBlock(text)
+  const shouldUseSecurityHighlight = cardIndex === 0 || cardIndex === 3 || cardIndex === 4
 
   if (!hazard) {
     const securitySentenceMatch = SECURITY_SENTENCE_RE.exec(text)
@@ -87,7 +95,7 @@ function ScenarioRichText({ text, className }: { text: string; className: string
       return (
         <span className={className}>
           {before ? <span>{splitLocationMarkers(before)}</span> : null}
-          <span style={{ color: "#4f46e5" }} className="font-semibold">
+          <span className={shouldUseSecurityHighlight ? securityAlertHighlightClass : "font-semibold text-[#4f46e5]"}>
             {splitLocationMarkers(matchText)}
           </span>
           {after ? <span>{splitLocationMarkers(after)}</span> : null}
@@ -110,7 +118,15 @@ function ScenarioRichText({ text, className }: { text: string; className: string
             return (
               <span key={i} className={urgentNoticeLineClass}>
                 <span className={urgentNoticeLabelClass}>NOTICE</span>
-                <span style={isSecurityMessage ? { color: "#4f46e5" } : undefined} className="font-semibold">
+                <span
+                  className={
+                    isSecurityMessage
+                      ? shouldUseSecurityHighlight
+                        ? securityAlertHighlightClass
+                        : "font-semibold text-[#4f46e5]"
+                      : "font-semibold"
+                  }
+                >
                   {splitLocationMarkers(m[1])}
                 </span>
               </span>
@@ -120,7 +136,7 @@ function ScenarioRichText({ text, className }: { text: string; className: string
             return (
               <span key={i} className={urgentNoticeLineClass}>
                 <span className={urgentNoticeLabelClass}>NOTICE</span>
-                <span style={{ color: "#4f46e5" }} className="font-semibold">
+                <span className={shouldUseSecurityHighlight ? securityAlertHighlightClass : "font-semibold text-[#4f46e5]"}>
                   {splitLocationMarkers(part.trim())}
                 </span>
               </span>
@@ -141,13 +157,14 @@ function ScenarioRichText({ text, className }: { text: string; className: string
           }
           if (MANDATORY_EVAC_RE.test(part.trim())) {
             MANDATORY_EVAC_RE.lastIndex = 0
+            const normalized = part.trim().replace(/^evacuation\b/i, "Evacuation")
             return (
-              <>
-                <span key={i} className={urgentNoticeLineClass}>
-                  <span className={urgentNoticeLabelClass}>NOTICE</span>
-                  <span className="block basis-full">{splitLocationMarkers(part.trim())}</span>
+              <span key={i} className={urgentNoticeLineClass}>
+                <span className={urgentNoticeLabelClass}>
+                  NOTICE
                 </span>
-              </>
+                <span className="block basis-full">{splitLocationMarkers(normalized)}</span>
+              </span>
             )
           }
           return (
@@ -209,14 +226,14 @@ function ScenarioRichText({ text, className }: { text: string; className: string
 const questionNavPrevClass = "gap-1 rounded-full pl-3 pr-4"
 const questionNavNextClass = "gap-1 rounded-full pl-4 pr-3"
 
-function renderScenarioWithBlackPhrase(before: string, cardIndex: number) {
+function renderScenarioWithBlackPhrase(before: string, cardIndex: number, scenarioClassName = scenarioQuestionClass) {
   const re = SCENARIO_BLACK_PHRASE[cardIndex]
   if (!re) {
-    return <ScenarioRichText text={before} className={scenarioQuestionClass} />
+    return <ScenarioRichText text={before} className={scenarioClassName} cardIndex={cardIndex} />
   }
   const parts = before.split(re)
   if (parts.length === 1) {
-    return <ScenarioRichText text={before} className={scenarioQuestionClass} />
+    return <ScenarioRichText text={before} className={scenarioClassName} cardIndex={cardIndex} />
   }
   return (
     <>
@@ -226,7 +243,7 @@ function renderScenarioWithBlackPhrase(before: string, cardIndex: number) {
             {part}
           </span>
         ) : (
-          <ScenarioRichText key={i} text={part} className={scenarioQuestionClass} />
+          <ScenarioRichText key={i} text={part} className={scenarioClassName} cardIndex={cardIndex} />
         )
       )}
     </>
@@ -248,8 +265,37 @@ function splitFinalQuestionPrompt(text: string) {
 }
 
 function QuestionCardTitle({ text, cardIndex }: { text: string; cardIndex: number }) {
+  const shouldSeparateAlertText = ALERT_TEXT_CARD_INDEXES.has(cardIndex) || cardIndex === 4
+  const alertMatch = shouldSeparateAlertText
+    ? SECURITY_SENTENCE_RE.exec(text) ?? MANDATORY_EVAC_SENTENCE_RE.exec(text) ?? HIGH_RISK_ALERT_SENTENCE_RE.exec(text)
+    : null
+
+  if (alertMatch && alertMatch.index !== undefined) {
+    const alertStart = alertMatch.index
+    const alertText = alertMatch[1].trim()
+    const beforeAlert = text.slice(0, alertStart).trimEnd()
+    const afterAlert = text.slice(alertStart + alertMatch[1].length).trimStart()
+    const { before: afterBeforePrompt, prompt: afterPrompt } = splitFinalQuestionPrompt(afterAlert)
+
+    return (
+      <>
+        {beforeAlert ? renderScenarioWithBlackPhrase(beforeAlert, cardIndex, "font-bold text-black") : null}
+        <span className="my-3 block animate-pulse rounded-md border-2 border-rose-200 bg-rose-50 px-3 py-2 text-[0.85rem] font-normal leading-relaxed text-rose-900 shadow-[0_0_0_2px_rgba(251,113,133,0.12)]">
+          <span className="mr-2 inline-block rounded-sm bg-rose-600 px-1.5 py-0.5 text-[0.68rem] font-extrabold tracking-wide text-white">
+            NOTICE
+          </span>
+          <span className="notice-body">{alertText}</span>
+        </span>
+        {afterBeforePrompt ? renderScenarioWithBlackPhrase(afterBeforePrompt, cardIndex) : null}
+        {afterPrompt ? <span className="block font-bold text-black">{afterPrompt}</span> : null}
+      </>
+    )
+  }
+
   const { before, prompt } = splitFinalQuestionPrompt(text)
-  if (!prompt) return <>{renderScenarioWithBlackPhrase(text, cardIndex)}</>
+  if (!prompt) {
+    return <>{renderScenarioWithBlackPhrase(text, cardIndex)}</>
+  }
 
   return (
     <>
@@ -260,6 +306,8 @@ function QuestionCardTitle({ text, cardIndex }: { text: string; cardIndex: numbe
 }
 
 export default function PlayQuestionsPage() {
+  const { theme } = useTheme()
+  const isSimple = theme === "simple"
   const router = useRouter()
   const stackSwiperRef = useRef<SwiperInstance | null>(null)
   const profile = useGameStore((s) => s.profile)
@@ -345,7 +393,7 @@ export default function PlayQuestionsPage() {
 
   return (
     <div className="relative mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
+      {!isSimple && <div className="full-mode-only pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
         <span className="absolute left-[4%] top-[8%] h-7 w-7 rotate-12 border-2 border-black bg-fuchsia-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute left-[13%] top-[22%] h-0 w-0 rotate-[20deg] border-l-[13px] border-r-[13px] border-b-[22px] border-l-transparent border-r-transparent border-b-orange-300 drop-shadow-[2px_2px_0_#000]" />
         <span className="absolute left-[6%] top-[44%] h-9 w-9 rotate-45 border-2 border-black bg-lime-300 shadow-[2px_2px_0_0_#000]" />
@@ -361,7 +409,7 @@ export default function PlayQuestionsPage() {
         <span className="absolute right-[9%] top-[56%] h-9 w-9 rotate-12 border-2 border-black bg-violet-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute right-[15%] bottom-[18%] h-0 w-0 -rotate-6 border-l-[15px] border-r-[15px] border-t-[22px] border-l-transparent border-r-transparent border-t-red-300 drop-shadow-[2px_2px_0_#000]" />
         <span className="absolute right-[5%] bottom-[8%] h-6 w-6 -rotate-12 border-2 border-black bg-amber-300 shadow-[2px_2px_0_0_#000]" />
-      </div>
+      </div>}
       <div className="mx-auto w-full max-w-xl">
         <h1 className="font-personality text-balance text-center text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
         Hi, {greetingName}
@@ -370,9 +418,9 @@ export default function PlayQuestionsPage() {
       {/* Folder: stacked “tabs” + front card */}
       <div className="mt-12">
         <div className="relative px-2 sm:px-4">
-          {total > 1 && (
+          {total > 1 && !isSimple && (
             <div
-              className="pointer-events-none absolute left-1/2 top-0 z-0 w-[min(100%,30rem)] -translate-x-1/2"
+              className="full-mode-only pointer-events-none absolute left-1/2 top-0 z-0 w-[min(100%,30rem)] -translate-x-1/2"
               aria-hidden
             >
               <Swiper
@@ -429,10 +477,15 @@ export default function PlayQuestionsPage() {
             <Card className="rounded-none border-0 bg-white text-black shadow-none">
               <CardHeader className="bg-white pb-3 pt-4">
                 <CardTitle className="w-full text-left font-personality text-sm font-bold leading-relaxed whitespace-pre-wrap sm:text-base">
-                  <div className="relative rounded-2xl border-4 border-black bg-yellow-100 px-4 py-3 shadow-[6px_6px_0_0_#000]">
+                  <div
+                    className={cn(
+                      "relative rounded-2xl border-4 border-black bg-yellow-100 px-4 py-3 shadow-[6px_6px_0_0_#000]",
+                      safeIndex === 0 ? "[&_*]:!font-bold [&_*.notice-body]:!font-normal" : ""
+                    )}
+                  >
                     <span
                       aria-hidden
-                      className="absolute -bottom-2 left-8 h-4 w-4 rotate-45 border-b-4 border-r-4 border-black bg-yellow-100"
+                      className="absolute -bottom-3 left-8 h-5 w-5 rotate-45 border-b-4 border-r-4 border-black bg-yellow-100"
                     />
                     <QuestionCardTitle text={q.question_text} cardIndex={safeIndex} />
                   </div>

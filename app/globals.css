@@ -35,6 +35,28 @@
     --radius: 0rem;
   }
 
+  .simple {
+    --background: 0 0% 100%;
+    --foreground: 152 30% 13%;
+    --card: 0 0% 98%;
+    --card-foreground: 152 30% 13%;
+    --popover: 0 0% 98%;
+    --popover-foreground: 152 30% 13%;
+    --primary: 152 30% 13%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 152 30% 13%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 152 16% 35%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 152 30% 13%;
+    --destructive: 8 90% 57%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 152 20% 24%;
+    --input: 152 20% 24%;
+    --ring: 152 20% 24%;
+  }
+
   .dark {
     --background: 152 24% 12%;
     --foreground: 0 0% 98%;
@@ -75,6 +97,36 @@
     background-image: radial-gradient(circle at 8% 12%, rgba(183, 132, 234, 0.18) 0, transparent 24%),
       radial-gradient(circle at 92% 14%, rgba(247, 176, 56, 0.18) 0, transparent 20%),
       radial-gradient(circle at 18% 84%, rgba(140, 202, 168, 0.16) 0, transparent 20%);
+  }
+
+  .simple body {
+    background-image: none;
+  }
+
+  .simple .full-mode-only {
+    display: none !important;
+  }
+
+  .simple * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+
+  .simple [class*="bg-fuchsia"],
+  .simple [class*="bg-orange"],
+  .simple [class*="bg-lime"],
+  .simple [class*="bg-yellow"],
+  .simple [class*="bg-emerald"],
+  .simple [class*="bg-sky"],
+  .simple [class*="bg-pink"],
+  .simple [class*="bg-cyan"],
+  .simple [class*="bg-rose"],
+  .simple [class*="bg-violet"],
+  .simple [class*="bg-amber"],
+  .simple [class*="bg-[#"] {
+    background-color: #fff !important;
+    color: #111 !important;
   }
 }
 

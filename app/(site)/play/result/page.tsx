@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PersonalityFlipCard } from "@/components/personality-flip-card"
@@ -20,7 +21,63 @@ interface ResultScoresPayload {
   decisionCount: number
 }
 
+const RESULT_THEME: Record<
+  DimensionKey,
+  { frameBg: string; headerBg: string; shareButton: string; deco: string }
+> = {
+  react: {
+    frameBg: "bg-[#FFE08A]",
+    headerBg: "bg-[#FF4D6D]",
+    shareButton: "bg-[#FF4D6D] hover:bg-[#ff7099]",
+    deco: "bg-[#FF9E00]",
+  },
+  trust: {
+    frameBg: "bg-[#DED2FF]",
+    headerBg: "bg-[#7B61FF]",
+    shareButton: "bg-[#7B61FF] hover:bg-[#9582ff]",
+    deco: "bg-[#42C2FF]",
+  },
+  indep: {
+    frameBg: "bg-[#FFD8A8]",
+    headerBg: "bg-[#FF7A00]",
+    shareButton: "bg-[#FF7A00] hover:bg-[#ff983d]",
+    deco: "bg-[#FFC93C]",
+  },
+  adapt: {
+    frameBg: "bg-[#CDFCCF]",
+    headerBg: "bg-[#00C853]",
+    shareButton: "bg-[#00C853] hover:bg-[#2de06f]",
+    deco: "bg-[#7CFF8A]",
+  },
+  mobil: {
+    frameBg: "bg-[#FFF2A8]",
+    headerBg: "bg-[#FFD400]",
+    shareButton: "bg-[#FFD400] hover:bg-[#ffdf4f]",
+    deco: "bg-[#FF8C00]",
+  },
+  safety: {
+    frameBg: "bg-[#CFF8FF]",
+    headerBg: "bg-[#00B8D9]",
+    shareButton: "bg-[#00B8D9] hover:bg-[#35cee9]",
+    deco: "bg-[#8EECF5]",
+  },
+  commu: {
+    frameBg: "bg-[#F4D3FF]",
+    headerBg: "bg-[#E040FB]",
+    shareButton: "bg-[#E040FB] hover:bg-[#e967ff]",
+    deco: "bg-[#FF8AE2]",
+  },
+  prep: {
+    frameBg: "bg-[#D7CCC8]",
+    headerBg: "bg-[#4E342E]",
+    shareButton: "bg-[#4E342E] hover:bg-[#5d4037]",
+    deco: "bg-[#795548]",
+  },
+}
+
 export default function PlayResultPage() {
+  const { theme } = useTheme()
+  const isSimple = theme === "simple"
   const router = useRouter()
   const profile = useGameStore((s) => s.profile)
   const answers = useGameStore((s) => s.answers)
@@ -137,22 +194,24 @@ export default function PlayResultPage() {
   }
 
   const personality = apiResult?.dominant != null ? getPersonalityCard(apiResult.dominant) : null
-  const resultName = profile.nickname?.trim() || "Player"
+  const resultTheme = apiResult ? RESULT_THEME[apiResult.dominant] : null
 
   return (
     <div className="relative mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
-        <span className="absolute left-[4%] top-[9%] h-7 w-7 rotate-12 border-2 border-black bg-fuchsia-300 shadow-[2px_2px_0_0_#000]" />
+      {!isSimple && <div className="full-mode-only pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
+        <span
+          className={`absolute left-[4%] top-[9%] h-7 w-7 rotate-12 border-2 border-black shadow-[2px_2px_0_0_#000] ${resultTheme?.deco ?? "bg-fuchsia-300"}`}
+        />
         <span className="absolute left-[11%] top-[26%] h-0 w-0 rotate-[20deg] border-l-[13px] border-r-[13px] border-b-[22px] border-l-transparent border-r-transparent border-b-orange-300 drop-shadow-[2px_2px_0_#000]" />
         <span className="absolute left-[8%] top-[62%] h-5 w-14 -rotate-6 border-2 border-black bg-yellow-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute right-[3%] top-[11%] h-6 w-14 -rotate-12 rounded-full border-2 border-black bg-cyan-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute right-[8%] top-[42%] h-9 w-9 rotate-12 border-2 border-black bg-violet-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute right-[13%] bottom-[15%] h-0 w-0 -rotate-6 border-l-[15px] border-r-[15px] border-t-[22px] border-l-transparent border-r-transparent border-t-red-300 drop-shadow-[2px_2px_0_#000]" />
-      </div>
+      </div>}
       <div className="mx-auto w-full max-w-xl">
       {(scoresLoading || !apiResult) && !scoresError && (
         <p className="rounded-none border-4 border-black bg-yellow-100 px-4 py-3 text-sm font-semibold text-black shadow-[6px_6px_0_0_#000]">
-          Saving your answers and loading your result from Supabase…
+          Saving your answers and loading your result from the database…
         </p>
       )}
 
@@ -174,23 +233,18 @@ export default function PlayResultPage() {
 
       {apiResult && personality && (
         <>
-          <div className="rounded-none border-4 border-black bg-[#fff5a8] p-2 shadow-[8px_8px_0_0_#000]">
-            <div className="mb-2 flex items-center justify-between border-2 border-black bg-[#66e6dc] px-3 py-1.5">
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-black">{resultName}</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-black">Personality Card</span>
-            </div>
-            <PersonalityFlipCard
-              key={apiResult.dominant}
-              personality={personality}
-            />
-          </div>
+          <PersonalityFlipCard
+            key={apiResult.dominant}
+            personality={personality}
+            playerName={profile.nickname}
+          />
           <div className="mt-10 flex justify-center">
             <div className="w-full max-w-[8.5rem]">
               <ResultShare
                 personalityTitle={personality.title}
                 nickname={profile.nickname}
                 triggerLabel="Share"
-                triggerClassName="h-10 w-full rounded-none border-2 border-black bg-pink-300 px-2 text-xs font-extrabold text-black shadow-[4px_4px_0_0_#000] hover:bg-pink-200 sm:px-4 sm:text-sm"
+                triggerClassName="h-10 w-full rounded-none border-2 border-black bg-[#2e6cff] px-2 text-xs font-extrabold text-white shadow-[4px_4px_0_0_#000] hover:bg-[#1f57db] sm:px-4 sm:text-sm"
               />
             </div>
           </div>

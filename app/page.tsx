@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import {
   DialogClose,
@@ -15,6 +16,8 @@ import {
 import { useGameStore } from "@/lib/stores/use-game-store"
 
 export default function WelcomePage() {
+  const { theme } = useTheme()
+  const isSimple = theme === "simple"
   const router = useRouter()
   const setConsentAccepted = useGameStore((s) => s.setConsentAccepted)
   const [consentOpen, setConsentOpen] = useState(false)
@@ -31,6 +34,21 @@ export default function WelcomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      {isSimple ? (
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+          <h1 className="text-balance font-personality text-4xl font-extrabold text-black sm:text-5xl">FOURSIGHT</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-black/80 sm:text-base">
+            A simple crisis simulation. Read each scenario and choose what you would do.
+          </p>
+          <button
+            type="button"
+            onClick={() => setConsentOpen(true)}
+            className="mt-10 rounded-none border-[3px] border-black bg-white px-8 py-3 text-base font-black uppercase tracking-wide text-black"
+          >
+            Start
+          </button>
+        </div>
+      ) : (
       <div
         className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#1476f2] p-3 md:items-start md:p-6 md:pt-2"
         style={{
@@ -158,6 +176,7 @@ export default function WelcomePage() {
           </div>
         </div>
       </div>
+      )}
 
       <Dialog open={consentOpen} onOpenChange={setConsentOpen}>
         <DialogContent className="overflow-hidden border-[3px] border-foreground bg-[#eaf6ff] p-0 shadow-[10px_10px_0_0_#1b3128] [&>button]:hidden sm:max-w-md">

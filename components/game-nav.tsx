@@ -12,6 +12,7 @@ export function GameNav() {
           <Link
             href="/"
             aria-label="Home"
+            title="Click to go to the landing page"
             className="inline-flex h-9 w-9 items-center justify-center rounded-none border-2 border-foreground bg-[#66e6dc] text-foreground shadow-[2px_2px_0_0_#1b3128] hover:bg-[#45d3c8]"
           >
             <Home className="h-4 w-4" />
@@ -21,6 +22,7 @@ export function GameNav() {
         <div className="flex items-center gap-2">
           <Link
             href="/about"
+            title="Click to see the introduction of this project"
             className="inline-flex items-center gap-1.5 rounded-none border-2 border-foreground bg-[#fff5a8] px-3 py-1 text-sm font-black text-foreground shadow-[2px_2px_0_0_#1b3128] hover:bg-[#ffe86b]"
           >
             <BookOpen className="h-4 w-4" />
@@ -28,6 +30,7 @@ export function GameNav() {
           </Link>
           <Link
             href="/archetypes"
+            title="Click to see the all personality types"
             className="inline-flex items-center gap-1.5 rounded-none border-2 border-foreground bg-[#d9d9ff] px-3 py-1 text-sm font-black text-foreground shadow-[2px_2px_0_0_#1b3128] hover:bg-[#c9c9ff]"
           >
             <Users className="h-4 w-4" />

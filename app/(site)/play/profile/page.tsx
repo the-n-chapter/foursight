@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { UserRound } from "lucide-react"
+import { useTheme } from "next-themes"
 import { FinnishMunicipalityInput } from "@/components/finnish-municipality-input"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { GenderOption, DependencyId } from "@/lib/data/game-db"
@@ -24,6 +25,8 @@ const DEPS: { id: DependencyId; label: string; emoji: string }[] = [
 ]
 
 export default function PlayProfilePage() {
+  const { theme } = useTheme()
+  const isSimple = theme === "simple"
   const router = useRouter()
   const setProfile = useGameStore((s) => s.setProfile)
   const setPlayerId = useGameStore((s) => s.setPlayerId)
@@ -103,7 +106,7 @@ export default function PlayProfilePage() {
 
   return (
     <div className="relative mx-auto w-full max-w-6xl px-4 py-6">
-      <div className="pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
+      {!isSimple && <div className="full-mode-only pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
         <span className="absolute left-[4%] top-[8%] h-7 w-7 rotate-12 border-2 border-black bg-fuchsia-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute left-[13%] top-[22%] h-0 w-0 rotate-[20deg] border-l-[13px] border-r-[13px] border-b-[22px] border-l-transparent border-r-transparent border-b-orange-300 drop-shadow-[2px_2px_0_#000]" />
         <span className="absolute left-[6%] top-[44%] h-9 w-9 rotate-45 border-2 border-black bg-lime-300 shadow-[2px_2px_0_0_#000]" />
@@ -119,7 +122,7 @@ export default function PlayProfilePage() {
         <span className="absolute right-[9%] top-[56%] h-9 w-9 rotate-12 border-2 border-black bg-violet-300 shadow-[2px_2px_0_0_#000]" />
         <span className="absolute right-[15%] bottom-[18%] h-0 w-0 -rotate-6 border-l-[15px] border-r-[15px] border-t-[22px] border-l-transparent border-r-transparent border-t-red-300 drop-shadow-[2px_2px_0_#000]" />
         <span className="absolute right-[5%] bottom-[8%] h-6 w-6 -rotate-12 border-2 border-black bg-amber-300 shadow-[2px_2px_0_0_#000]" />
-      </div>
+      </div>}
 
       <div className="mx-auto w-full max-w-sm">
 
