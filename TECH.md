@@ -62,7 +62,12 @@ Zustand persistence key and shape are defined in `lib/stores/use-game-store.ts` 
 
 ## HTTP API (game)
 
-All handlers live under `app/api/game/`. They use `getSupabaseAdmin()` from `lib/supabase/admin.ts`. If Supabase env vars are missing, routes respond with **503** and a short error message.
+All handlers live under `app/api/game/`. They use **`getSupabaseAdmin()`** from `lib/supabase/admin.ts`.
+
+**Responses when Supabase is unavailable:**
+
+- **503** — Environment variables were missing **at request time**, so no admin client could be created. Production message text is abbreviated ("Supabase is not configured."); local development returns a hint to add `.env.local` entries.
+- **500** with a generic **"Database error"** (or similar) — The admin client ran a query and PostgreSQL / PostgREST returned an error. Check the **terminal running `npm run start` (or the host logs)** for lines prefixed `[game/player]`, `[game/questions]`, `[game/submit]`, or `[game/result-scores]`; those log Supabase's real error message.
 
 | Method & path | Role |
 |---------------|------|
@@ -83,15 +88,20 @@ Server code expects PostgreSQL tables (names from queries):
 
 **Security note:** The app uses the **service role** key only in server-side route handlers. It bypasses RLS; do not expose this key to the client. Row Level Security and anon keys are appropriate for any future direct browser access, which this game API path does not rely on today.
 
+**Admin client behavior:** `getSupabaseAdmin()` creates a lazily initialized Supabase JS client keyed from `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (values are trimmed after read). Only a successful client is memoized for the Node process lifetime; **`null` from missing env is not cached**, so env can become valid later in the same process without restarting.
+
 ## Environment variables
 
 | Variable | Scope | Purpose |
 |----------|--------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Public name; used server-side | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Admin API access for game routes |
+| `NEXT_PUBLIC_SUPABASE_URL` | Public **name**; also read server-side | Supabase project URL (inlined into client bundles at **build time** where referenced) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Admin API access for game routes (never inlined; supply at **runtime** on the host process) |
 | `NEXT_PUBLIC_API_URL` | Optional | Overrides default REST base in `lib/config.ts` (default points at an external API host for non-game features) |
 
-For local development, use `.env.local` (not committed). Production (e.g. Vercel) must define the Supabase variables or game endpoints return 503.
+- **Local:** Put secrets in `.env.local` (not committed). Restart the dev server or `next start` after editing env files so `process.env` picks up changes.
+- **Hosted (e.g. Vercel):** Define the Supabase variables in the dashboard for **Production** (and Preview if you run the game flow there). `.env.local` from your machine is not deployed—omitted variables yield **503** on game APIs.
+
+Using `npm run build` followed by **`npm run start` on the same machine** reads `.env.local` like development, as long as you run `start` from the project root; if the UI still fails while dev works, compare env effective at runtime with the troubleshooting notes under **HTTP API (game)** above.
 
 ## Build and quality
 
@@ -104,9 +114,10 @@ For local development, use `.env.local` (not committed). Production (e.g. Vercel
 ## Deployment notes (e.g. Vercel)
 
 - Framework preset: **Next.js**.
-- Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the project environment.
-- Ensure Node version matches the one used locally (see `package.json` / Vercel defaults).
-- If the build log stops during “Collecting build traces,” check Vercel build logs for OOM or timeout; clearing cache or raising memory limits can help on large dependency trees.
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the project environment for each environment where the play flow runs. Redeploy after changing secrets.
+- Prefer the **service role** secret from Supabase → Project Settings → API (JWT `eyJ…` legacy keys or newer `sb_secret_…`-style secrets both work with `@supabase/supabase-js`; avoid pasting anon or publishable keys here).
+- Ensure Node version matches the one used locally (see `package.json` / platform defaults).
+- If the build log stops during “Collecting build traces,” check build logs for OOM or timeout; clearing cache or raising memory limits can help on large dependency trees.
 
 ## Related files (quick reference)
 
@@ -116,4 +127,4 @@ For local development, use `.env.local` (not committed). Production (e.g. Vercel
 
 ---
 
-*Last updated for schema v2 (no free-text "Other" flow; 8 scored dimensions including `commu` and `prep`).*
+*Last updated: schema v2 (no free-text "Other" flow; eight scored dimensions including `commu` and `prep`); Supabase env and production troubleshooting notes expanded.*
