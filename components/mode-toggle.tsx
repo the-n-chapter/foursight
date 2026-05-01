@@ -20,7 +20,12 @@ export function ModeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" disabled>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 rounded-none border-2 border-foreground bg-white text-foreground shadow-[2px_2px_0_0_#1b3128]"
+        disabled
+      >
         <Moon className="h-[1.2rem] w-[1.2rem]" />
         <span className="sr-only">Toggle theme</span>
       </Button>
@@ -28,7 +33,12 @@ export function ModeToggle() {
   }
 
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme}>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 rounded-none border-2 border-foreground bg-white text-foreground shadow-[2px_2px_0_0_#1b3128] hover:bg-[#f3f4f6]"
+      onClick={toggleTheme}
+    >
       <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Sun className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span className="sr-only">{theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}</span>

@@ -11,6 +11,7 @@ interface FinnishMunicipalityInputProps {
   onChange: (value: string) => void
   placeholder?: string
   className?: string
+  inputClassName?: string
   "aria-required"?: boolean
   required?: boolean
 }
@@ -21,6 +22,7 @@ export function FinnishMunicipalityInput({
   onChange,
   placeholder,
   className,
+  inputClassName,
   "aria-required": ariaRequired,
   required,
 }: FinnishMunicipalityInputProps) {
@@ -32,6 +34,7 @@ export function FinnishMunicipalityInput({
     <div className={cn("relative min-w-0", className)}>
       <Input
         id={id}
+        className={inputClassName}
         value={value}
         placeholder={placeholder}
         autoComplete="off"

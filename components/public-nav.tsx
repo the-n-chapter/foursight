@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { ModeToggle } from "@/components/mode-toggle"
+import { Home } from "lucide-react"
 
 export function PublicNav() {
   return (
@@ -9,9 +10,10 @@ export function PublicNav() {
       <div className="flex h-16 items-center justify-between px-4 ml-2">
         <Link
           href="/"
-          className="text-lg font-semibold tracking-tight text-foreground hover:text-primary transition-colors"
+          aria-label="Home"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-none border-2 border-foreground bg-[#66e6dc] text-foreground shadow-[2px_2px_0_0_#1b3128] hover:bg-[#45d3c8]"
         >
-          FOURSIGHT
+          <Home className="h-4 w-4" />
         </Link>
         <div className="flex items-center gap-2">
           <ModeToggle />

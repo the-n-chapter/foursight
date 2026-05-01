@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -109,43 +108,65 @@ export default function PlayResultPage() {
 
   if (questions === null) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-10 text-sm text-muted-foreground">
-        Loading results…
+      <div className="mx-auto w-full max-w-2xl px-4 py-10">
+        <div className="rounded-none border-4 border-black bg-yellow-100 px-4 py-3 text-sm font-semibold text-black shadow-[6px_6px_0_0_#000]">
+          Loading results…
+        </div>
       </div>
     )
   }
 
   if (questions.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-lg px-4 py-10 text-center text-sm text-muted-foreground">
-        No questions found in the database. Add seed data in Supabase, then return to the quiz.
+      <div className="mx-auto w-full max-w-lg px-4 py-10">
+        <div className="rounded-none border-4 border-black bg-rose-100 px-4 py-3 text-center text-sm font-semibold text-black shadow-[6px_6px_0_0_#000]">
+          No questions found in the database. Add seed data in Supabase, then return to the quiz.
+        </div>
       </div>
     )
   }
 
   if (!allAnswered) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 py-10 text-sm text-muted-foreground">
-        Loading results…
+      <div className="mx-auto w-full max-w-2xl px-4 py-10">
+        <div className="rounded-none border-4 border-black bg-yellow-100 px-4 py-3 text-sm font-semibold text-black shadow-[6px_6px_0_0_#000]">
+          Loading results…
+        </div>
       </div>
     )
   }
 
   const personality = apiResult?.dominant != null ? getPersonalityCard(apiResult.dominant) : null
+  const resultName = profile.nickname?.trim() || "Player"
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
+    <div className="relative mx-auto w-full max-w-6xl px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
+        <span className="absolute left-[4%] top-[9%] h-7 w-7 rotate-12 border-2 border-black bg-fuchsia-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute left-[11%] top-[26%] h-0 w-0 rotate-[20deg] border-l-[13px] border-r-[13px] border-b-[22px] border-l-transparent border-r-transparent border-b-orange-300 drop-shadow-[2px_2px_0_#000]" />
+        <span className="absolute left-[8%] top-[62%] h-5 w-14 -rotate-6 border-2 border-black bg-yellow-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[3%] top-[11%] h-6 w-14 -rotate-12 rounded-full border-2 border-black bg-cyan-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[8%] top-[42%] h-9 w-9 rotate-12 border-2 border-black bg-violet-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[13%] bottom-[15%] h-0 w-0 -rotate-6 border-l-[15px] border-r-[15px] border-t-[22px] border-l-transparent border-r-transparent border-t-red-300 drop-shadow-[2px_2px_0_#000]" />
+      </div>
+      <div className="mx-auto w-full max-w-xl">
       {(scoresLoading || !apiResult) && !scoresError && (
-        <p className="text-sm text-muted-foreground">
+        <p className="rounded-none border-4 border-black bg-yellow-100 px-4 py-3 text-sm font-semibold text-black shadow-[6px_6px_0_0_#000]">
           Saving your answers and loading your result from Supabase…
         </p>
       )}
 
       {scoresError && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
-          <p className="text-destructive font-medium">Could not load database scores</p>
-          <p className="mt-1 text-muted-foreground">{scoresError}</p>
-          <Button type="button" variant="outline" size="sm" className="mt-4 rounded-full" onClick={() => void loadScoresFromDb()}>
+        <div className="rounded-none border-4 border-black bg-rose-100 p-4 text-sm shadow-[6px_6px_0_0_#000]">
+          <p className="font-extrabold text-red-700">Could not load database scores</p>
+          <p className="mt-1 font-medium text-black">{scoresError}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-4 rounded-none border-2 border-black bg-white font-extrabold text-black shadow-[3px_3px_0_0_#000] hover:bg-yellow-100"
+            onClick={() => void loadScoresFromDb()}
+          >
             Retry
           </Button>
         </div>
@@ -153,41 +174,29 @@ export default function PlayResultPage() {
 
       {apiResult && personality && (
         <>
-          <PersonalityFlipCard
-            key={apiResult.dominant}
-            personality={personality}
-          />
-          <div className="mt-10 grid w-full grid-cols-3 gap-2 sm:gap-3">
-            <Button asChild variant="outline" className="h-10 min-w-0 rounded-full px-2 text-xs sm:px-4 sm:text-sm">
-              <Link href="/archetypes" className="text-center leading-tight">
-                Archetypes
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-10 min-w-0 rounded-full px-2 text-xs sm:px-4 sm:text-sm">
-              <Link href="/">Home</Link>
-            </Button>
-            <div className="min-w-0">
+          <div className="rounded-none border-4 border-black bg-[#fff5a8] p-2 shadow-[8px_8px_0_0_#000]">
+            <div className="mb-2 flex items-center justify-between border-2 border-black bg-[#66e6dc] px-3 py-1.5">
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-black">{resultName}</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-black">Personality Card</span>
+            </div>
+            <PersonalityFlipCard
+              key={apiResult.dominant}
+              personality={personality}
+            />
+          </div>
+          <div className="mt-10 flex justify-center">
+            <div className="w-full max-w-[8.5rem]">
               <ResultShare
                 personalityTitle={personality.title}
                 nickname={profile.nickname}
                 triggerLabel="Share"
-                triggerClassName="h-10 w-full px-2 text-xs sm:px-4 sm:text-sm"
+                triggerClassName="h-10 w-full rounded-none border-2 border-black bg-pink-300 px-2 text-xs font-extrabold text-black shadow-[4px_4px_0_0_#000] hover:bg-pink-200 sm:px-4 sm:text-sm"
               />
             </div>
           </div>
         </>
       )}
-
-      {!(apiResult && personality) && (
-        <div className="mt-12 flex flex-wrap gap-4">
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/archetypes">Archetypes</Link>
-          </Button>
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/">Home</Link>
-          </Button>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

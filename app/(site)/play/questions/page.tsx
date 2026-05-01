@@ -16,9 +16,7 @@ import { useGameStore } from "@/lib/stores/use-game-store"
 import "swiper/css"
 import "swiper/css/effect-coverflow"
 
-const WHAT_DO_YOU_DO = /What do you do\??/i
-
-const scenarioQuestionClass = "text-sky-600 dark:text-sky-300"
+const scenarioQuestionClass = "font-medium text-black"
 
 /** Match card index (0-based): 4th card → 3, 5th → 4 */
 const SCENARIO_BLACK_PHRASE: Record<number, RegExp> = {
@@ -26,7 +24,7 @@ const SCENARIO_BLACK_PHRASE: Record<number, RegExp> = {
   4: /(What['\u2019]s your next move\??)/i,
 }
 
-const promptBlackClass = scenarioQuestionClass
+const promptBlackClass = "font-semibold text-black"
 
 function isHazardNoticeBlock(text: string) {
   return /NOTICE:\s*Hazardous Release/i.test(text) && /\[your location\]/.test(text)
@@ -39,17 +37,29 @@ const FROM_THE_AUTHORITIES_SEGMENT = /(From\s+(?:the\s+)?Authorities\.?)/i
 
 /** NOTICE block: danger icon + text; border height follows content (no full-width stretch). */
 const hazardNoticeIndentClass =
-  "mt-1 inline-flex max-w-full self-start gap-1.5 border-l-2 border-sky-500/35 pl-3 align-top sm:mt-1.5 sm:gap-2 sm:pl-4 dark:border-sky-400/30"
+  "mt-1 inline-flex max-w-full self-start gap-1.5 rounded-md border-2 border-amber-500/70 bg-amber-100 px-2 py-1.5 align-top sm:mt-1.5 sm:gap-2 sm:px-3 sm:py-2"
 
 const hazardNoticeIconClass =
-  "mt-0.5 h-[1.1em] w-[1.1em] shrink-0 text-destructive sm:mt-1"
+  "mt-0.5 h-[1.1em] w-[1.1em] shrink-0 text-red-600 sm:mt-1"
 const urgentNoticeLineClass =
-  "inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1 text-sm font-medium text-destructive animate-pulse"
+  "inline-flex max-w-full flex-wrap items-center gap-1 rounded-md border-2 border-red-600 bg-yellow-200 px-2 py-1 text-sm font-bold text-red-700"
 const urgentNoticeLabelClass =
-  "rounded-sm bg-destructive px-1.5 py-0.5 text-[0.68rem] font-bold tracking-wide text-destructive-foreground"
+  "rounded-sm bg-red-600 px-1.5 py-0.5 text-[0.68rem] font-extrabold tracking-wide text-white"
 const HIGH_RISK_ALERT_RE = /(your region is in a high risk level,\s*please leave now!)/gi
 const MANDATORY_EVAC_RE =
   /(Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A\s*\[address:\s*B\]\.?)/gi
+
+function isSecuritySituationMessage(text: string) {
+  const normalized = text.trim().toLowerCase()
+  return (
+    normalized.includes("security situation in your area has escalated") &&
+    normalized.includes("no immediate action is required at this time") &&
+    normalized.includes("stay alert and follow official updates")
+  )
+}
+
+const SECURITY_SENTENCE_RE =
+  /((?:The\s+)?security situation in your area has escalated\.\s*No immediate action is required at this time\.\s*Stay alert and follow official updates\.?)/i
 
 function splitLocationMarkers(chunk: string): ReactNode[] {
   const segs = chunk.split(/(\[your location\])/g)
@@ -68,8 +78,25 @@ function ScenarioRichText({ text, className }: { text: string; className: string
   const hazard = isHazardNoticeBlock(text)
 
   if (!hazard) {
+    const securitySentenceMatch = SECURITY_SENTENCE_RE.exec(text)
+    if (securitySentenceMatch && securitySentenceMatch.index !== undefined) {
+      const start = securitySentenceMatch.index
+      const matchText = securitySentenceMatch[1]
+      const before = text.slice(0, start)
+      const after = text.slice(start + matchText.length)
+      return (
+        <span className={className}>
+          {before ? <span>{splitLocationMarkers(before)}</span> : null}
+          <span style={{ color: "#4f46e5" }} className="font-semibold">
+            {splitLocationMarkers(matchText)}
+          </span>
+          {after ? <span>{splitLocationMarkers(after)}</span> : null}
+        </span>
+      )
+    }
+
     const pieces = text.split(
-      /(NOTICE:\s*[^\n]+|your region is in a high risk level,\s*please leave now!|Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A\s*\[address:\s*B\]\.?)/gi
+      /(NOTICE:\s*[^\n]+|(?:The\s+)?security situation in your area has escalated\.\s*No immediate action is required at this time\.\s*Stay alert and follow official updates\.?|your region is in a high risk level,\s*please leave now!|Evacuation is now mandatory\.\s*You have two hours to get to the assembly point A\s*\[address:\s*B\]\.?)/gi
     )
     if (pieces.length === 1) {
       return <span className={className}>{splitLocationMarkers(text)}</span>
@@ -79,10 +106,23 @@ function ScenarioRichText({ text, className }: { text: string; className: string
         {pieces.map((part, i) => {
           const m = /^NOTICE:\s*(.*)$/i.exec(part.trim())
           if (m) {
+            const isSecurityMessage = isSecuritySituationMessage(m[1])
             return (
               <span key={i} className={urgentNoticeLineClass}>
                 <span className={urgentNoticeLabelClass}>NOTICE</span>
-                <span>{splitLocationMarkers(m[1])}</span>
+                <span style={isSecurityMessage ? { color: "#4f46e5" } : undefined} className="font-semibold">
+                  {splitLocationMarkers(m[1])}
+                </span>
+              </span>
+            )
+          }
+          if (isSecuritySituationMessage(part)) {
+            return (
+              <span key={i} className={urgentNoticeLineClass}>
+                <span className={urgentNoticeLabelClass}>NOTICE</span>
+                <span style={{ color: "#4f46e5" }} className="font-semibold">
+                  {splitLocationMarkers(part.trim())}
+                </span>
               </span>
             )
           }
@@ -103,12 +143,10 @@ function ScenarioRichText({ text, className }: { text: string; className: string
             MANDATORY_EVAC_RE.lastIndex = 0
             return (
               <>
-                <span key={`${i}-before`} className="block h-1.5" aria-hidden />
                 <span key={i} className={urgentNoticeLineClass}>
                   <span className={urgentNoticeLabelClass}>NOTICE</span>
                   <span className="block basis-full">{splitLocationMarkers(part.trim())}</span>
                 </span>
-                <span key={`${i}-after`} className="block h-1.5" aria-hidden />
               </>
             )
           }
@@ -195,17 +233,28 @@ function renderScenarioWithBlackPhrase(before: string, cardIndex: number) {
   )
 }
 
-function QuestionCardTitle({ text, cardIndex }: { text: string; cardIndex: number }) {
-  const match = WHAT_DO_YOU_DO.exec(text)
-  if (!match || match.index === undefined) {
-    return <>{renderScenarioWithBlackPhrase(text, cardIndex)}</>
+function splitFinalQuestionPrompt(text: string) {
+  const normalized = text.replace(/\s+$/, "")
+  const qIndex = normalized.lastIndexOf("?")
+  if (qIndex === -1) {
+    return { before: text, prompt: "" }
   }
-  const before = text.slice(0, match.index)
-  const fromPrompt = text.slice(match.index)
+  const before = normalized.slice(0, qIndex + 1)
+  const prevQIndex = before.lastIndexOf("?", qIndex - 1)
+  const promptStart = prevQIndex === -1 ? 0 : prevQIndex + 1
+  const prompt = before.slice(promptStart).trimStart()
+  const scenario = before.slice(0, promptStart)
+  return { before: scenario, prompt }
+}
+
+function QuestionCardTitle({ text, cardIndex }: { text: string; cardIndex: number }) {
+  const { before, prompt } = splitFinalQuestionPrompt(text)
+  if (!prompt) return <>{renderScenarioWithBlackPhrase(text, cardIndex)}</>
+
   return (
     <>
       {before ? renderScenarioWithBlackPhrase(before, cardIndex) : null}
-      <span className="text-foreground">{fromPrompt}</span>
+      <span className="block font-bold text-black">{prompt}</span>
     </>
   )
 }
@@ -288,16 +337,35 @@ export default function PlayQuestionsPage() {
   const total = questions.length
   const safeIndex = Math.min(Math.max(0, currentIndex), total - 1)
   const q = questions[safeIndex]
+  const greetingName = profile.nickname?.trim() || "there"
   const answeredCount = questions.filter((qq) => isQuestionAnswered(qq, answers)).length
   const hasCurrentAnswer = isQuestionAnswered(q, answers)
   const isFirst = safeIndex === 0
   const isLast = safeIndex === total - 1
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
-      <h1 className="font-personality text-balance text-center text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-        Questions
-      </h1>
+    <div className="relative mx-auto w-full max-w-6xl px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 hidden md:block" aria-hidden>
+        <span className="absolute left-[4%] top-[8%] h-7 w-7 rotate-12 border-2 border-black bg-fuchsia-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute left-[13%] top-[22%] h-0 w-0 rotate-[20deg] border-l-[13px] border-r-[13px] border-b-[22px] border-l-transparent border-r-transparent border-b-orange-300 drop-shadow-[2px_2px_0_#000]" />
+        <span className="absolute left-[6%] top-[44%] h-9 w-9 rotate-45 border-2 border-black bg-lime-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute left-[11%] top-[66%] h-5 w-14 -rotate-6 border-2 border-black bg-yellow-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute left-[16%] bottom-[10%] h-7 w-7 -rotate-12 rounded-full border-2 border-black bg-emerald-300 shadow-[2px_2px_0_0_#000]" />
+
+        <span className="absolute left-[26%] top-[2%] h-6 w-16 -rotate-[8deg] border-2 border-black bg-sky-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute left-[43%] top-[84%] h-6 w-6 rotate-[30deg] border-2 border-black bg-pink-300 shadow-[2px_2px_0_0_#000]" />
+
+        <span className="absolute right-[2%] top-[5%] h-6 w-14 -rotate-12 rounded-full border-2 border-black bg-cyan-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[20%] top-[12%] h-7 w-7 rotate-45 border-2 border-black bg-lime-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[3%] top-[31%] h-8 w-8 -rotate-12 rounded-full border-2 border-black bg-rose-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[9%] top-[56%] h-9 w-9 rotate-12 border-2 border-black bg-violet-300 shadow-[2px_2px_0_0_#000]" />
+        <span className="absolute right-[15%] bottom-[18%] h-0 w-0 -rotate-6 border-l-[15px] border-r-[15px] border-t-[22px] border-l-transparent border-r-transparent border-t-red-300 drop-shadow-[2px_2px_0_#000]" />
+        <span className="absolute right-[5%] bottom-[8%] h-6 w-6 -rotate-12 border-2 border-black bg-amber-300 shadow-[2px_2px_0_0_#000]" />
+      </div>
+      <div className="mx-auto w-full max-w-xl">
+        <h1 className="font-personality text-balance text-center text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+        Hi, {greetingName}
+        </h1>
 
       {/* Folder: stacked “tabs” + front card */}
       <div className="mt-12">
@@ -333,8 +401,8 @@ export default function PlayQuestionsPage() {
                   <SwiperSlide key={i} className="!w-28 sm:!w-32">
                     <div
                       className={cn(
-                        "mx-auto h-9 w-full rounded-t-lg border border-b-0 shadow-sm",
-                        i < safeIndex ? "border-border bg-muted/90" : "border-border bg-muted/60"
+                        "mx-auto h-9 w-full rounded-none border-2 border-b-0 border-black bg-yellow-200 shadow-[4px_-4px_0_0_#000]",
+                        i < safeIndex ? "bg-pink-200" : "bg-yellow-200"
                       )}
                     />
                   </SwiperSlide>
@@ -345,23 +413,29 @@ export default function PlayQuestionsPage() {
 
           <div
             className={cn(
-              "relative z-10 rounded-xl border-2 bg-card shadow-md",
-              total > 1 ? "mt-10 border-primary/25" : "border-border"
+              "relative z-10 rounded-none border-4 border-black bg-white text-black shadow-[8px_8px_0_0_#000]",
+              total > 1 ? "mt-10" : ""
             )}
           >
-            <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5 rounded-t-[10px]">
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center justify-between border-b-4 border-black bg-cyan-300 px-4 py-2.5">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-black">
                 Card {safeIndex + 1} of {total}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs font-bold text-black">
                 {allAnswered ? "Complete" : `${answeredCount}/${total} answered`}
               </span>
             </div>
 
-            <Card className="border-0 shadow-none rounded-t-none rounded-b-xl">
-              <CardHeader className="pb-2">
-                <CardTitle className="w-full text-left font-personality text-lg font-medium leading-relaxed whitespace-pre-wrap sm:text-xl">
-                  <QuestionCardTitle text={q.question_text} cardIndex={safeIndex} />
+            <Card className="rounded-none border-0 bg-white text-black shadow-none">
+              <CardHeader className="bg-white pb-3 pt-4">
+                <CardTitle className="w-full text-left font-personality text-sm font-bold leading-relaxed whitespace-pre-wrap sm:text-base">
+                  <div className="relative rounded-2xl border-4 border-black bg-yellow-100 px-4 py-3 shadow-[6px_6px_0_0_#000]">
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-2 left-8 h-4 w-4 rotate-45 border-b-4 border-r-4 border-black bg-yellow-100"
+                    />
+                    <QuestionCardTitle text={q.question_text} cardIndex={safeIndex} />
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 pt-4 pb-6">
@@ -373,13 +447,13 @@ export default function PlayQuestionsPage() {
                       type="button"
                       onClick={() => setAnswer(q.id, opt.id)}
                       className={cn(
-                        "w-full rounded-lg border px-4 py-3 text-left text-xs transition-colors sm:text-sm",
+                        "w-full rounded-none border-2 border-black px-4 py-3 text-left text-xs font-medium text-black transition-all duration-150 sm:text-sm",
                         selected
-                          ? "border-primary bg-primary/10 text-foreground"
-                          : "border-border hover:bg-accent/60"
+                          ? "bg-lime-300 shadow-[4px_4px_0_0_#000] translate-x-[-1px] translate-y-[-1px]"
+                          : "bg-white hover:bg-purple-100 hover:shadow-[3px_3px_0_0_#000]"
                       )}
                     >
-                      <span className="mr-2 font-medium text-primary">{opt.option_key}.</span>
+                      <span className="mr-2 font-extrabold text-black">{opt.option_key}.</span>
                       {opt.option_text}
                     </button>
                   )
@@ -394,7 +468,7 @@ export default function PlayQuestionsPage() {
             type="button"
             variant="outline"
             size="sm"
-            className={questionNavPrevClass}
+            className={`${questionNavPrevClass} rounded-none border-2 border-black bg-white font-extrabold text-black shadow-[4px_4px_0_0_#000] hover:bg-yellow-100`}
             disabled={isFirst}
             onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
           >
@@ -406,7 +480,7 @@ export default function PlayQuestionsPage() {
             <Button
               type="button"
               size="sm"
-              className={questionNavNextClass}
+              className={`${questionNavNextClass} rounded-none border-2 border-black bg-pink-300 font-extrabold text-black shadow-[4px_4px_0_0_#000] hover:bg-pink-200`}
               disabled={!allAnswered}
               onClick={() => {
                 if (!allAnswered) {
@@ -424,7 +498,7 @@ export default function PlayQuestionsPage() {
               type="button"
               variant="secondary"
               size="sm"
-              className={questionNavNextClass}
+              className={`${questionNavNextClass} rounded-none border-2 border-black bg-cyan-300 font-extrabold text-black shadow-[4px_4px_0_0_#000] hover:bg-cyan-200`}
               disabled={!hasCurrentAnswer}
               onClick={() => {
                 if (!hasCurrentAnswer) {
@@ -439,6 +513,7 @@ export default function PlayQuestionsPage() {
             </Button>
           )}
         </div>
+      </div>
       </div>
     </div>
   )
