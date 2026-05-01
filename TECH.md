@@ -14,23 +14,29 @@ FOURSIGHT is a prototype **personality / crisis-archetype experience**: visitors
 | UI | React 19, TypeScript 5 |
 | Styling | Tailwind CSS 3.4, `tailwindcss-animate`, shadcn-style UI primitives (`components/ui/*`) |
 | Fonts | [Inter](https://fonts.google.com/specimen/Inter) (body), [Fraunces](https://fonts.google.com/specimen/Fraunces) as `font-personality` for display headings and card titles |
-| Themes | `next-themes` (light/dark) |
+| Visual modes | **`full`** vs **`simple`** via `next-themes` (not a light/dark pair). Wiring: `components/providers.tsx`, toggle `components/mode-toggle.tsx`; tokens in `app/globals.css` (`:root` vs `.simple`). |
 | Client state (play flow) | [Zustand](https://zustand-demo.pmnd.rs/) with `persist` (localStorage) |
 | Validation | [Zod](https://zod.dev/) in API routes |
 | Database (game) | [Supabase](https://supabase.com/) (PostgreSQL) via `@supabase/supabase-js`, **service role** on the server only |
-| Auth (legacy dashboard) | `next-auth`, JWT/bcrypt-related deps; dashboard routes use a separate UX from the public game |
 
-Other notable libraries: Radix UI primitives, Lucide icons, Sonner toasts, Framer Motion, Recharts (dashboard), Axios.
+Radix UI, Lucide, Sonner toasts, and Framer Motion back the UI; Recharts appears in reusable chart primitives. Dependencies such as **`next-auth`**, Axios, bcryptjs/JWT, and components that link to **`/dashboard/*`** (`components/main-nav.tsx`, notifications) remain in the repo but **have no matching pages under `app/`** — the active App Router surface is `/`, `/about`, `/archetypes`, `/play/*`, and **`/api/game/*` only.**
+
+### Visual modes (full vs simple)
+
+- **`full`** — default (`defaultTheme="full"`). Uses base `:root` CSS variables and the layered radial background on `body`; decorative shadows and richer surfaces where used.
+- **`simple`** — `class="simple"` on the document from `next-themes`. Overrides tokens under `.simple` in `app/globals.css`, removes the page gradient, strips box/text shadows broadly, hides elements marked `.full-mode-only`, and biases toward simpler chrome.
+- **`enableSystem`** is **`false`**; only `full` and `simple` are registered (`themes={["full", "simple"]}`).
+- A `.dark` ruleset still exists in `app/globals.css` for compatibility with Tailwind's `darkMode: ["class"]`, but the live theme switcher does **not** toggle `dark`; it only switches **full/simple**.
 
 ## Repository layout (high level)
 
 ```
-app/                    # App Router: pages, layouts, API route handlers
-  (site)/               # Public site segment: GameNav, play, about, archetypes
-  api/game/             # Game REST handlers (player, questions, submit, result-scores)
-  dashboard/            # Authenticated dashboard (devices, settings, etc.)
-  login/, signup/       # Account flows
-components/             # Shared React components (nav, flip cards, game UI, etc.)
+app/                    # App Router: root layout + pages
+  page.tsx              # Landing
+  globals.css           # Design tokens (:root), .simple overrides; legacy `.dark` block unused by ThemeProvider
+  (site)/               # Public segment: GameNav, play, about, archetypes
+  api/game/             # REST: player, questions, submit, result-scores
+components/             # GameNav, ModeToggle, theme provider, flip cards, game UI, shadcn-style ui/*
 lib/                    # Domain logic, Supabase admin client, scoring, stores, types
 public/                 # Static assets (logos, images)
 ```
@@ -43,11 +49,10 @@ public/                 # Static assets (logos, images)
   - `/play/profile` — nickname, age, gender, Finnish municipality (validated list), household dependencies.
   - `/play/questions` — folder-style question stack; loads questions from API.
   - `/play/result` — loads aggregated scores and presents archetype result UI.
-- **Dashboard** (`/dashboard/*`) — separate product surface (devices, settings); uses `MainNav` and localStorage-based user display where applicable.
 
 Layouts:
 
-- `app/(site)/layout.tsx` — wraps public play + about + archetypes with `GameNav`.
+- `app/(site)/layout.tsx` — wraps public play + about + archetypes with `GameNav` (home, about, archetypes links + **full/simple** mode toggle).
 - `app/(site)/play/layout.tsx` — wraps play subtree with `PlayConsentGate`.
 
 ## Play flow and client state
@@ -56,7 +61,7 @@ Layouts:
 2. **Profile** — User fills the form; client calls `POST /api/game/player` with `sessionToken` and profile fields. Server upserts a row in `players` and returns `playerId` (stored in Zustand).
 3. **Questions** — `GET /api/game/questions` returns ordered questions and options (weights per dimension). Answers live in Zustand (`answers` as selected option IDs per question).
 4. **Submit** — Client sends `POST /api/game/submit` with `sessionToken` and `decisions` (per question: `optionId` only). Server resolves scores, replaces `decisions` for that player, and persists rows.
-5. **Result** — `GET /api/game/result-scores?sessionToken=…` loads decisions, computes averages and **dominant dimension**, drives result UI and archetype mapping (`lib/personality-cards.ts`, `lib/dimension-scoring.ts`, `lib/dominant-dimension.ts`).
+5. **Result** — `GET /api/game/result-scores?sessionToken=...` loads decisions, computes averages and **dominant dimension**, drives result UI and archetype mapping (`lib/personality-cards.ts`, `lib/dimension-scoring.ts`, `lib/dominant-dimension.ts`).
 
 Zustand persistence key and shape are defined in `lib/stores/use-game-store.ts` (includes `consentAccepted`, `clientSessionId`, `playerId`, `profile`, answers).
 
@@ -127,4 +132,4 @@ Using `npm run build` followed by **`npm run start` on the same machine** reads 
 
 ---
 
-*Last updated: schema v2 (no free-text "Other" flow; eight scored dimensions including `commu` and `prep`); Supabase env and production troubleshooting notes expanded.*
+*Last updated: visual modes documented as full/simple; repository layout and routes aligned with current `app/` tree; Supabase and build notes as above.*
